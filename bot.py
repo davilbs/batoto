@@ -10,4 +10,4 @@ for i in range(len(cogs)):
     cogs[i].setup(client)
 
 print("Bot iniciado!")
-client.run(NzMzMjk2MTY0MjA3ODUzNjI4.XxBFRQ.FWjwxQsj9SaJc6UDQ-xEDFDRMQE)
+client.run("NzMzMjk2MTY0MjA3ODUzNjI4.XxBFRQ.FWjwxQsj9SaJc6UDQ-xEDFDRMQE")
