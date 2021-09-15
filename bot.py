@@ -1,11 +1,6 @@
-import os
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
 import music
-
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
 
 cogs = [music]
 
@@ -15,4 +10,4 @@ for i in range(len(cogs)):
     cogs[i].setup(client)
 
 print("Bot iniciado!")
-client.run(TOKEN)
+client.run(NzMzMjk2MTY0MjA3ODUzNjI4.XxBFRQ.FWjwxQsj9SaJc6UDQ-xEDFDRMQE)

@@ -1,4 +1,3 @@
 discord
 pynacl
 youtube_dl
-dotenv
