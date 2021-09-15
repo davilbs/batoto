@@ -6,7 +6,6 @@ import music
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD = os.getenv('DISCORD_GUILD')
 
 cogs = [music]
 
