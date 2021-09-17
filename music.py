@@ -24,17 +24,19 @@ class music(commands.Cog):
             await voice_channel.connect()
         elif ctx.voice_client.channel != voice_channel:
             if not ctx.voice_client.is_playing():
-                print("changin g channel")
+                print("changing channel")
                 await ctx.voice_client.move_to(voice_channel)
         return True
         
     
     @commands.command(aliases=['l', 'leave'])
     async def disconnect(self, ctx: commands.Context):
+        self.songs_queue = []
         await ctx.send("So long, farewell, no more sailing...")
         await ctx.voice_client.disconnect()
 
     @commands.command(aliases=['p'])
+    @commands.cooldown(per=1, rate=3.0, type=commands.BucketType.guild)
     async def play(self, ctx: commands.Context, url: str = ''):
         if url == '':
             await ctx.send("URL não especificada")
@@ -95,9 +97,9 @@ class music(commands.Cog):
             await ctx.send("Not in a voice channel")
             return
         self.songs_queue = self.songs_queue[1:]
-        vc.stop()
+        vc.pause()
         if len(self.songs_queue) > 0:
-            self.play_song(ctx, self.songs_queue[0])
+            await self.play_song(ctx, self.songs_queue[0])
 
     def after_play(self, error):
         self.songs_queue = self.songs_queue[1:]
