@@ -2,15 +2,18 @@ import discord
 import random
 import discord
 from discord.ext import commands
-import music, funny
+import music
+import funny
 
 cogs = [music, funny]
 
-client = commands.Bot(command_prefix='?', intents = discord.Intents.all())
+client = commands.Bot(command_prefix='?', intents=discord.Intents.all())
+
 
 @client.event
 async def on_ready():
     print("Bot iniciado!")
+
 
 @client.event
 async def on_message(message):
@@ -22,6 +25,7 @@ async def on_message(message):
         await nome_aleatorio(message)
 
     await client.process_commands(message)
+
 
 async def nome_aleatorio(message):
     with open('nouns.txt', 'r') as f:
@@ -38,7 +42,7 @@ async def nome_aleatorio(message):
 
     name = " " + adjective + " " + noun
     rand_name += name
-    
+
     await message.channel.send(rand_name)
 
 print("Inicializando cogs...")
