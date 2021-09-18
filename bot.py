@@ -17,6 +17,13 @@ async def on_message(message):
     if message.author == client.user:
         return
 
+    msg = message.content.lower()
+    if ("aleatorio" in msg) or ('aleatório' in msg):
+        await nome_aleatorio(message)
+
+    await client.process_commands(message)
+
+async def nome_aleatorio(message):
     with open('nouns.txt', 'r') as f:
         nouns = f.read().splitlines()
     with open('adjectives.txt', 'r') as f:
@@ -25,16 +32,14 @@ async def on_message(message):
     noun = nouns[random.randint(0, len(nouns))]
     adjective = adjectives[random.randint(0, len(adjectives))]
     vowels = ['a', 'e', 'i', 'o', 'u']
-    if message.content == 'aleatorio' or message.content == 'aleatório':
-        rand_name = "You are a"
-        if adjective[0] in vowels:
-            rand_name += 'n'
+    rand_name = "You are a"
+    if adjective[0] in vowels:
+        rand_name += 'n'
 
-        name = " " + adjective + " " + noun
-        rand_name += name
-        
-        await message.channel.send(rand_name)
-    await client.process_commands(message)
+    name = " " + adjective + " " + noun
+    rand_name += name
+    
+    await message.channel.send(rand_name)
 
 print("Inicializando cogs...")
 for i in range(len(cogs)):
