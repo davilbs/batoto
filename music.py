@@ -15,18 +15,20 @@ class music(commands.Cog):
     @commands.command(aliases=['l', 'leave', 'stop'])
     async def disconnect(self, ctx: commands.Context):
         self.songs_queue = []
-        await ctx.send("So long, farewell, no more sailing...")
+        if ctx.voice_client.is_playing():
+            await ctx.send("So long, farewell, no more sailing...")
         await ctx.voice_client.disconnect()
 
     @commands.command(aliases=['p'])
     @commands.cooldown(per=1, rate=3.0, type=commands.BucketType.guild)
-    async def play(self, ctx: commands.Context, url: str = ''):
+    async def play(self, ctx: commands.Context, *, url: str = ''):
         if url == '':
             await ctx.send("URL not identified")
             return
         if not await self.join(ctx):
             return
         info = self.get_song_info(url)
+        print(info)
         await self.add_song_to_queue(ctx, info)
         if len(self.songs_queue) == 1:
             await self.play_song(ctx, info)
@@ -97,10 +99,13 @@ class music(commands.Cog):
         await ctx.send(f"Song {info['title']} added to queue! Queue has {len(self.songs_queue)} songs...")
 
     def get_song_info(self, url: str):
-        YDL_OPTIONS = {'format': 'bestaudio'}
+        YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist':'True'}
 
         with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
-            return ydl.extract_info(url, download=False)
+            if 'http://' in url:
+                return ydl.extract_info(url, download=False)
+            url = f"ytsearch:{url}"
+            return ydl.extract_info(url, download=False)['entries'][0]
 
     async def play_song(self, ctx: commands.Context, info: dict):
         FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
