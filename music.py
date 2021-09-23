@@ -12,23 +12,7 @@ class music(commands.Cog):
         self.client = client
         self.songs_queue = []
 
-    @commands.command()
-    async def join(self, ctx: commands.Context):
-        if ctx.author.voice is None:
-            await ctx.send("Você não tá no voice")
-            return False
-        voice_channel = ctx.author.voice.channel
-        # TODO check if bot is playing already
-        if ctx.voice_client is None:
-            print("joining channel")
-            await voice_channel.connect()
-        elif ctx.voice_client.channel != voice_channel:
-            if not ctx.voice_client.is_playing():
-                print("changing channel")
-                await ctx.voice_client.move_to(voice_channel)
-        return True
-
-    @commands.command(aliases=['l', 'leave'])
+    @commands.command(aliases=['l', 'leave', 'stop'])
     async def disconnect(self, ctx: commands.Context):
         self.songs_queue = []
         await ctx.send("So long, farewell, no more sailing...")
@@ -38,9 +22,8 @@ class music(commands.Cog):
     @commands.cooldown(per=1, rate=3.0, type=commands.BucketType.guild)
     async def play(self, ctx: commands.Context, url: str = ''):
         if url == '':
-            await ctx.send("URL não especificada")
+            await ctx.send("URL not identified")
             return
-        # print(f"trying to join {ctx.author.channel.name}")
         if not await self.join(ctx):
             return
         info = self.get_song_info(url)
@@ -48,15 +31,24 @@ class music(commands.Cog):
         if len(self.songs_queue) == 1:
             await self.play_song(ctx, info)
 
+    # @commands.command()
+    # async def loop(self, ctx: commands.Context):
+    #     if ctx.voice_client.is_playing():
+    #         pass
+    #     elif len(self.songs_queue) > 0:
+    #         pass
+    #     else:
+    #         await ctx.send("No songs in queue to loop")
+
     @commands.command()
     async def pause(self, ctx: commands.Context):
         ctx.voice_client.pause()
-        await ctx.send("parey parey")
+        await ctx.send("Song is paused . . .")
 
     @commands.command()
     async def resume(self, ctx: commands.Context):
         ctx.voice_client.resume()
-        await ctx.send("voltey voltey")
+        await ctx.send("Resuming song . . .")
 
     @commands.command(aliases=['q'])
     async def queue(self, ctx: commands.Context):
@@ -64,6 +56,7 @@ class music(commands.Cog):
             await ctx.send("The current queue is empty :(")
             return
         queue_list = ''
+        await ctx.trigger_typing()
         for song in self.songs_queue:
             queue_list += song['title']
             queue_list += "\n"
@@ -79,6 +72,24 @@ class music(commands.Cog):
         vc.pause()
         if len(self.songs_queue) > 0:
             await self.play_song(ctx, self.songs_queue[0])
+
+    async def join(self, ctx: commands.Context):
+        if ctx.author.voice is None:
+            await ctx.send("You must be in a voice channel")
+            return False
+        voice_channel = ctx.author.voice.channel
+        if ctx.voice_client is None:
+            print("joining channel")
+            await voice_channel.connect()
+        elif ctx.voice_client.channel != voice_channel:
+            if not ctx.voice_client.is_playing():
+                print("changing channel")
+                await ctx.voice_client.move_to(voice_channel)
+            else:
+                await ctx.send("I'm already playing songs! Come and join us!")
+                return False
+        self.songs_queue = []
+        return True
 
     async def add_song_to_queue(self, ctx: commands.Context, info: dict,):
         self.songs_queue.append(info)
