@@ -80,15 +80,16 @@ class music(commands.Cog):
         voice_channel = ctx.author.voice.channel
         if ctx.voice_client is None:
             print("joining channel")
+            self.songs_queue = []
             await voice_channel.connect()
         elif ctx.voice_client.channel != voice_channel:
             if not ctx.voice_client.is_playing():
                 print("changing channel")
+                self.songs_queue = []
                 await ctx.voice_client.move_to(voice_channel)
             else:
                 await ctx.send("I'm already playing songs! Come and join us!")
                 return False
-        self.songs_queue = []
         return True
 
     async def add_song_to_queue(self, ctx: commands.Context, info: dict,):
