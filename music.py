@@ -35,17 +35,20 @@ class music(commands.Cog):
 
     @commands.command(aliases=['d', 'r'])
     async def remove(self, ctx: commands.Context, *, idx):
-        if (idx == 1) and (idx <= len(self.songs_queue)):
-            song = self.songs_queue[idx-1]
-            await ctx.send(f"Removing song: \"{song['title']}\"")
-            await self.skip()
-            return
-        elif idx.isnumeric() and (idx <= len(self.songs_queue)):
-            song = self.songs_queue[idx-1]
-            await ctx.send(f"Removing song: \"{song['title']}\"")
-            self.songs_queue.pop(idx+1)
+        if idx.isnumeric():
+            i = int(idx) - 1
         else:
-            await ctx.send("Me de um numero que esteja dentro do limite da fila seu retardado")
+            await ctx.send("That's not a number")
+            return
+        if len(self.songs_queue) == 0:
+            await self.skip(ctx)
+        elif i <= len(self.songs_queue) and (i >= 0):
+            await ctx.send(f"Removing song: \"{self.songs_queue[i]['title']}\"")
+            self.songs_queue.pop(i)
+            if i == 0:
+                await self.skip(ctx)
+        else:
+            await ctx.send("Index out of bounds")
 
 
     # @commands.command()
@@ -89,6 +92,8 @@ class music(commands.Cog):
         vc.pause()
         if len(self.songs_queue) > 0:
             await self.play_song(ctx, self.songs_queue[0])
+        else:
+            await self.disconnect(ctx)
 
     async def join(self, ctx: commands.Context):
         if ctx.author.voice is None:
