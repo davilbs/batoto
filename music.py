@@ -33,6 +33,17 @@ class music(commands.Cog):
         if len(self.songs_queue) == 1:
             await self.play_song(ctx, info)
 
+    @commands.command(aliases=['d', 'r'])
+    async def remove(self, ctx: commands.Context, idx):
+        if idx == 0:
+            await self.skip()
+            return
+        else:
+            song = self.songs_queue[idx]
+            await ctx.send(f"Removing song: \"{song['title']}\"")
+            self.songs_queue = self.songs_queue[:idx] + self.songs_queue[idx+1:]
+
+
     # @commands.command()
     # async def loop(self, ctx: commands.Context):
     #     if ctx.voice_client.is_playing():
