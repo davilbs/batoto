@@ -34,14 +34,18 @@ class music(commands.Cog):
             await self.play_song(ctx, info)
 
     @commands.command(aliases=['d', 'r'])
-    async def remove(self, ctx: commands.Context, idx):
-        if idx == 0:
+    async def remove(self, ctx: commands.Context, *, idx):
+        if (idx == 1) and (idx <= len(self.songs_queue)):
+            song = self.songs_queue[idx-1]
+            await ctx.send(f"Removing song: \"{song['title']}\"")
             await self.skip()
             return
-        else:
-            song = self.songs_queue[idx]
+        elif idx.isnumeric() and (idx <= len(self.songs_queue)):
+            song = self.songs_queue[idx-1]
             await ctx.send(f"Removing song: \"{song['title']}\"")
-            self.songs_queue = self.songs_queue[:idx] + self.songs_queue[idx+1:]
+            self.songs_queue.pop(idx+1)
+        else:
+            await ctx.send("Me de um numero que esteja dentro do limite da fila seu retardado")
 
 
     # @commands.command()
