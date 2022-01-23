@@ -35,7 +35,7 @@ class music(commands.Cog):
 
     # Play song from info and run after routine
     async def play_song(self, info: utils.song_info):
-        if not self.queue.loop():
+        if not self.queue.looping:
             print(f"Now Playing song {info.title}")
         source = await discord.FFmpegOpusAudio.from_probe(info.yt_url, **self.FFMPEG_OPTIONS)
         vc = self.my_ctx.voice_client
