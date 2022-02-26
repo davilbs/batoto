@@ -10,7 +10,7 @@ class music(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.queue = utils.song_queue()
+        self.songqueue = utils.SongQueue()
         self.FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
                                'options': '-vn'}
 
@@ -21,11 +21,11 @@ class music(commands.Cog):
             return False
         voice_channel = ctx.author.voice.channel
         if ctx.voice_client is None:
-            self.queue.reset()
+            self.songqueue.reset()
             await voice_channel.connect()
         elif ctx.voice_client.channel != voice_channel:
             if not ctx.voice_client.is_playing():
-                self.queue.reset()
+                self.songqueue.reset()
                 await ctx.voice_client.move_to(voice_channel)
             else:
                 await utils.send_answer(ctx, "I'm already playing songs! Come and join us!")
@@ -34,28 +34,35 @@ class music(commands.Cog):
         return True
 
     # Play song from info and run after routine
-    async def play_song(self, info: utils.song_info):
-        if not self.queue.looping:
-            print(f"Now Playing song {info.title}")
-        source = await discord.FFmpegOpusAudio.from_probe(info.yt_url, **self.FFMPEG_OPTIONS)
-        vc = self.my_ctx.voice_client
-        vc.play(source, after=self.after_play)
+    async def play_song(self, info: utils.SongInfo):
+        try:
+            if not self.songqueue.looping:
+                print(f"Now Playing song {info.title}")
+            source = await discord.FFmpegOpusAudio.from_probe(info.yt_url, **self.FFMPEG_OPTIONS)
+            vc = self.my_ctx.voice_client
+            vc.play(source, after=self.after_play)
+        except discord.errors.ClientException:
+            print("Failed to stop song")
+
 
     # Routine after finishing playing a song
     def after_play(self, error):
-        if self.queue.empty():
+        if self.songqueue.empty():
             coro = self.disconnect(self.my_ctx)
         else:
-            coro = self.play_song(self.queue.next())
+            coro = self.play_song(self.songqueue.next())
         fut = asyncio.run_coroutine_threadsafe(coro, self.client.loop)
         try:
             fut.result()
         except:
-            print(f"Error: {error}")
+            if error is None:
+                print(f"Successful execution!")    
+            else:
+                print(f"Error: {error}")
 
     @commands.command(aliases=['l', 'leave', 'stop'])
     async def disconnect(self, ctx: commands.Context):
-        self.queue.reset()
+        self.songqueue.reset()
         if ctx.voice_client.is_playing():
             await utils.send_answer(ctx, "So long, farewell, no more sailing...")
         await ctx.voice_client.disconnect()
@@ -63,13 +70,20 @@ class music(commands.Cog):
     @commands.command(aliases=['p'])
     @commands.cooldown(per=1, rate=3.0, type=commands.BucketType.guild)
     async def play(self, ctx: commands.Context, *, url: str = ''):
+            
         if url == '':
             return await utils.send_answer(ctx, "Song not identified")
+
         if not await self.join(ctx):
             return await utils.send_answer(ctx, "Could not join")
-        info = utils.get_song_info(url)
-        await self.queue.add_song(ctx, info)
-        if self.queue.size == 1:
+
+        if 'spotify' == url.split()[0]:
+            info = utils.get_song_info_spotify(url)
+        else:
+            info = utils.get_song_info_yt(url)
+            
+        await self.songqueue.add_song(ctx, info)
+        if self.songqueue.size == 1:
             await self.play_song(info)
 
     @commands.command()
@@ -87,17 +101,26 @@ class music(commands.Cog):
         if self.my_ctx.voice_client is None:
             return await utils.send_answer(ctx, "Not playing songs now")
         self.my_ctx.voice_client.pause()
-        await self.play_song(self.queue.next())
+        if self.songqueue.empty():
+            await self.disconnect(ctx)
+        else:
+            await self.play_song(self.songqueue.next())
+
+    @commands.command(aliases=['q'])
+    async def queue(self, ctx: commands.Context):
+        if self.songqueue.empty():
+            await utils.send_answer(ctx, "Queue empty")
+        await self.songqueue.send_queue(ctx)
 
     @commands.command(aliases=['d', 'r'])
     async def remove(self, ctx: commands.Context, *, idx):
         if not idx.isnumeric():
             return await utils.send_answer(ctx, "That's not a number")
         i = int(idx) - 1
-        if i == self.queue.index:
-            return await self.skip(ctx)
-        if not await self.queue.remove_song(ctx, i):
-            await utils.send_answer(ctx, "Index out of bounds")
+        if not await self.songqueue.remove_song(ctx, i):
+            return await utils.send_answer(ctx, "Index out of bounds")
+        if i == self.songqueue.index:
+            await self.skip(ctx)
 
 def setup(client):
     client.add_cog(music(client))

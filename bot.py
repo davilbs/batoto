@@ -4,16 +4,16 @@ import discord
 from discord.ext import commands
 import music
 import funny
+import dotenv
 
 cogs = [music, funny]
-
+DISCORD_TOKEN = dotenv.dotenv_values(".env")['DISCORD_TOKEN']
 client = commands.Bot(command_prefix='?', intents=discord.Intents.all())
 
 
 @client.event
 async def on_ready():
     print("Bot iniciado!")
-
 
 @client.event
 async def on_message(message):
@@ -49,4 +49,4 @@ print("Inicializando cogs...")
 for i in range(len(cogs)):
     cogs[i].setup(client)
 
-client.run("NzMzMjk2MTY0MjA3ODUzNjI4.XxBFRQ.FWjwxQsj9SaJc6UDQ-xEDFDRMQE")
+client.run(DISCORD_TOKEN)
