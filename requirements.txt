@@ -2,3 +2,5 @@ discord
 pynacl
 youtube_dl
 spotipy
+python-dotenv
+asyncio
