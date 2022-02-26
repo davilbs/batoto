@@ -133,4 +133,16 @@ def get_song_info_yt(arg: str):
 spotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(SPOTIFY_ID, SPOTIFY_TOKEN))
 
 def get_song_info_spotify(arg: str):
+    args = arg.split()
+    # https://open.spotify.com/playlist/7Gq4mz0gcOzqjdlqxh3EdO?si=dfa57c93533a46d7
+    if "playlist" in args[1]:
+        # Add playlist
+        # - Does not update automatically
+        # - Need to tag all songs of same playlist for simultaneous removal
+        # - Add all sequentially
+        pass
+    elif "track" in args[1]:
+        # Add track to queue
+        # - Tag tracks as spotify
+        pass
     pass
