@@ -6,9 +6,18 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 import time
 import dotenv
+import os
 
-SPOTIFY_TOKEN = dotenv.dotenv_values(".env")['SPOTIFY_TOKEN']
-SPOTIFY_ID = dotenv.dotenv_values(".env")['SPOTIFY_ID']
+is_prod = os.environ.get('IS_HEROKU', None)
+
+if is_prod:
+    DISCORD_TOKEN = os.environ.get('DISCORD_TOKEN')
+    SPOTIFY_TOKEN = os.environ.get('SPOTIFY_TOKEN')
+    SPOTIFY_ID = os.environ.get('SPOTIFY_ID')
+else:
+    DISCORD_TOKEN = dotenv.dotenv_values(".env")['DISCORD_TOKEN']
+    SPOTIFY_TOKEN = dotenv.dotenv_values(".env")['SPOTIFY_TOKEN']
+    SPOTIFY_ID = dotenv.dotenv_values(".env")['SPOTIFY_ID']
 
 class SongInfo():
     title: str

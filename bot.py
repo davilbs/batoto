@@ -1,15 +1,13 @@
-import discord
 import random
 import discord
 from discord.ext import commands
+from utils import DISCORD_TOKEN
 import music
 import funny
-import dotenv
 
 cogs = [music, funny]
-DISCORD_TOKEN = dotenv.dotenv_values(".env")['DISCORD_TOKEN']
-client = commands.Bot(command_prefix='?', intents=discord.Intents.all())
 
+client = commands.Bot(command_prefix='?', intents=discord.Intents.all())
 
 @client.event
 async def on_ready():
