@@ -1,9 +1,15 @@
+import os
+import dotenv
 import random
 import discord
 from discord.ext import commands
-from utils import DISCORD_TOKEN
-import music
-import funny
+import music, funny
+from utils import is_prod
+
+if is_prod:
+    DISCORD_TOKEN = os.environ.get('DISCORD_TOKEN')
+else:
+    DISCORD_TOKEN = dotenv.dotenv_values(".env")['DISCORD_TOKEN']
 
 cogs = [music, funny]
 

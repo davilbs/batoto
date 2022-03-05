@@ -2,8 +2,6 @@ import discord
 import asyncio
 from discord.ext import commands
 import utils
-import json
-
 
 class music(commands.Cog):
     my_ctx = commands.Context
@@ -78,14 +76,21 @@ class music(commands.Cog):
             return await utils.send_answer(ctx, "Could not join")
 
         if 'spotify' == url.split()[0]:
-            info = utils.get_song_info_spotify(url)
+            tracks = utils.get_song_info_spotify(url)
+            for track in tracks:
+                info = utils.get_song_info_yt(track['search'])
+                info.title = track['title']
+                info.artist = track['artist']
+                playlist = False if track['playlist'] is None else True
+                await self.songqueue.add_song(ctx, info, playlist)
+                if self.songqueue.size == 1:
+                    await self.play_song(info)
         else:
             info = utils.get_song_info_yt(url)
+            await self.songqueue.add_song(ctx, info)
+            if self.songqueue.size == 1:
+                await self.play_song(info)
             
-        await self.songqueue.add_song(ctx, info)
-        if self.songqueue.size == 1:
-            await self.play_song(info)
-
     @commands.command()
     async def pause(self, ctx: commands.Context):
         ctx.voice_client.pause()

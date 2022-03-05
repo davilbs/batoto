@@ -1,21 +1,19 @@
-import discord
-from discord.ext import commands
-from discord import Embed
 import youtube_dl
 import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
-import time
 import dotenv
+import json
+import time
 import os
+from spotipy.oauth2 import SpotifyClientCredentials
+from discord.ext import commands
+from discord import Embed
 
 is_prod = os.environ.get('IS_HEROKU', None)
 
 if is_prod:
-    DISCORD_TOKEN = os.environ.get('DISCORD_TOKEN')
     SPOTIFY_TOKEN = os.environ.get('SPOTIFY_TOKEN')
     SPOTIFY_ID = os.environ.get('SPOTIFY_ID')
 else:
-    DISCORD_TOKEN = dotenv.dotenv_values(".env")['DISCORD_TOKEN']
     SPOTIFY_TOKEN = dotenv.dotenv_values(".env")['SPOTIFY_TOKEN']
     SPOTIFY_ID = dotenv.dotenv_values(".env")['SPOTIFY_ID']
 
@@ -24,20 +22,12 @@ class SongInfo():
     artist: str
     requester: dict
     duration: int
-
-    def create_embed(self):
-        embed_message = discord.Embed(title=self.title)
-        embed_message.set_thumbnail(url=self.sthumbnail)
-        embed_message.set_author(name=self.artist)
-        return embed_message
-    
-    def set_requester(self, name, avatar):
-        self.requester = {"name": name, "avatar": avatar}
-
-class YTSongInfo(SongInfo):
     sthumbnail: str
     lthumbnail: str
     yt_url: str
+    spotify: bool
+    playlist: str
+    webpage_url: str
 
     def __init__(self, info: dict):
         if 'track' in info:
@@ -52,21 +42,32 @@ class YTSongInfo(SongInfo):
         self.lthumbnail = info['thumbnails'][-1]['url']
         self.yt_url = info['formats'][0]['url']
         self.duration = info['duration']
+        self.playlist = info['playlist']
+        self.spotify = info['spotify']
+        self.webpage_url = info['webpage_url']
 
-class SpotifySongInfo(SongInfo):
-    pass
+    def create_embed(self):
+        embed_message = Embed(title=self.title)
+        embed_message.set_thumbnail(url=self.sthumbnail)
+        embed_message.set_author(name=self.artist)
+        return embed_message
+    
+    def set_requester(self, name, avatar):
+        self.requester = {"name": name, "avatar": avatar}
 
 class SongQueue():
+    queue: list
     # Initialize empty queue
     def __init__(self):
         self.reset()
 
     # Insert song int queue
-    async def add_song(self, ctx: commands.Context, info: SongInfo):
+    async def add_song(self, ctx: commands.Context, info: SongInfo, playlist: bool = False):
         self.queue.append(info)
         info.set_requester(ctx.author.display_name, ctx.author.avatar_url)
         self.size += 1
-        await send_embed(ctx, info)
+        if not playlist:
+            await send_embed(ctx, info)
 
     # Remove song from queue
     async def remove_song(self, ctx: commands.Context, idx: int = 0):
@@ -92,12 +93,19 @@ class SongQueue():
                 song_time = time.strftime('%H:%M:%S', time.gmtime(self.queue[i].duration))
             else:
                 song_time = time.strftime('%M:%S', time.gmtime(self.queue[i].duration))
-            queue.add_field(name=f"{i+1}. Length: {song_time}", value=f"[{self.queue[i].title}]({self.queue[i].yt_url})", inline=False)
+            nam = f"{i+1}. Length: {song_time}"
+            if i == self.index:
+                nam += "`currently playing`"
+            val = f"[{self.queue[i].title}]({self.queue[i].webpage_url})"
+            print(nam, val, song_time)
+            queue.add_field(name=nam,value=val, inline=False)
 
         for i in range(self.size):
             total_time += self.queue[i].duration
         total_time = time.strftime('%H:%M:%S', time.gmtime(total_time))
-        queue.set_footer(text=f"{self.size} songs in queue. Total duration: {total_time}")
+        footer = f"{self.size} songs in queue. Total duration: {total_time}"
+        print(footer)
+        queue.set_footer(text=footer)
         await ctx.send(embed=queue)
 
     # Check if queue is empty
@@ -120,7 +128,7 @@ async def send_answer(ctx: commands.Context, msg: str):
 
 async def send_embed(ctx: commands.Context, song: SongInfo):
     user = ctx.author.display_name
-    msg = Embed(title=song.title, url=song.yt_url,
+    msg = Embed(title=song.title, url=song.webpage_url,
                 description=f"Song added by {user}")
     msg.set_author(name=user, icon_url=ctx.author.avatar_url)
     msg.set_thumbnail(url=song.sthumbnail)
@@ -134,24 +142,47 @@ def get_song_info_yt(arg: str):
 
     with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
         if 'http' in arg:
-            return YTSongInfo(ydl.extract_info(arg, download=False))
+            return SongInfo(ydl.extract_info(arg, download=False))
         arg = f"ytsearch:{arg} Music"
         alldata = ydl.extract_info(arg, download=False)
-        return YTSongInfo(alldata['entries'][0])
+        song = alldata['entries'][0]
+        with open("youtube_track.json", 'w') as f:
+            json.dump(song, f)
+        song['playlist'] = False
+        song['spotify'] = False
+        return SongInfo(song)
 
 spotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(SPOTIFY_ID, SPOTIFY_TOKEN))
 
 def get_song_info_spotify(arg: str):
     args = arg.split()
-    # https://open.spotify.com/playlist/7Gq4mz0gcOzqjdlqxh3EdO?si=dfa57c93533a46d7
     if "playlist" in args[1]:
-        # Add playlist
-        # - Does not update automatically
-        # - Need to tag all songs of same playlist for simultaneous removal
-        # - Add all sequentially
-        pass
+        # Add playlist tracks
+        playlist = spotify.playlist(args[1])
+        total = playlist["tracks"]["total"]
+        pos = 0
+        while pos < total:
+            results = spotify.playlist_tracks(args[1], offset=pos)
+            for item in results["items"]:
+                track = item["track"]
+                info = {
+                    "search": f"{track['name']} {track['artists'][0]['name']}",
+                    "title": f"{track['name']}",
+                    "artist": f"{track['artists'][0]['name']}",
+                    "spotify": True,
+                    "playlist": f"{playlist['name']}"
+                }
+                yield info
+            pos += 100
     elif "track" in args[1]:
         # Add track to queue
         # - Tag tracks as spotify
-        pass
-    pass
+        track = spotify.track(args[1])
+        info = {
+            "search": f"{track['name']} {track['artists'][0]['name']}",
+            "title": f"{track['name']}",
+            "artist": f"{track['artists'][0]['name']}",
+            "spotify": True,
+            "playlist": None
+        }
+        yield info
