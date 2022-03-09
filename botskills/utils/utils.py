@@ -14,8 +14,8 @@ if is_prod:
     SPOTIFY_TOKEN = os.environ.get('SPOTIFY_TOKEN')
     SPOTIFY_ID = os.environ.get('SPOTIFY_ID')
 else:
-    SPOTIFY_TOKEN = dotenv.dotenv_values(".env")['SPOTIFY_TOKEN']
-    SPOTIFY_ID = dotenv.dotenv_values(".env")['SPOTIFY_ID']
+    SPOTIFY_TOKEN = dotenv.dotenv_values("./botskills/utils/.env")['SPOTIFY_TOKEN']
+    SPOTIFY_ID = dotenv.dotenv_values("./botskills/utils/.env")['SPOTIFY_ID']
 
 class SongInfo():
     title: str

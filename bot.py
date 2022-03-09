@@ -3,13 +3,13 @@ import dotenv
 import random
 import discord
 from discord.ext import commands
-import music, funny
-from utils import is_prod
+import botskills.music.music as music, botskills.funny.funny as funny
+from botskills.utils.utils import is_prod
 
 if is_prod:
     DISCORD_TOKEN = os.environ.get('DISCORD_TOKEN')
 else:
-    DISCORD_TOKEN = dotenv.dotenv_values(".env")['DISCORD_TOKEN']
+    DISCORD_TOKEN = dotenv.dotenv_values("./botskills/utils/.env")['DISCORD_TOKEN']
 
 cogs = [music, funny]
 

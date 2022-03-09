@@ -1,7 +1,7 @@
 import discord
 import asyncio
 from discord.ext import commands
-import utils
+import botskills.utils.utils as utils
 
 class music(commands.Cog):
     my_ctx = commands.Context
