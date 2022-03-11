@@ -93,11 +93,11 @@ class SongQueue():
                 song_time = time.strftime('%H:%M:%S', time.gmtime(self.queue[i].duration))
             else:
                 song_time = time.strftime('%M:%S', time.gmtime(self.queue[i].duration))
-            nam = f"{i+1}. Length: {song_time}"
+            val = f"Length: {song_time} | [yt link]({self.queue[i].webpage_url})"
+            nam = f"{i+1}. [{self.queue[i].title}]"
             if i == self.index:
-                nam += "`currently playing`"
-            val = f"[{self.queue[i].title}]({self.queue[i].webpage_url})"
-            print(nam, val, song_time)
+                nam += "  `currently playing`"
+            print(nam, val)
             queue.add_field(name=nam,value=val, inline=False)
 
         for i in range(self.size):
