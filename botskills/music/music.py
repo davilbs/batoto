@@ -127,5 +127,10 @@ class music(commands.Cog):
         if i == self.songqueue.index:
             await self.skip(ctx)
 
+    @commands.command()
+    async def clear(self, ctx: commands.Context):
+        self.songqueue.reset()
+        await utils.send_answer(ctx, "Queue cleared!")
+
 def setup(client):
     client.add_cog(music(client))
