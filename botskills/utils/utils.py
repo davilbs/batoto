@@ -63,8 +63,8 @@ class SongQueue():
 
     # Insert song int queue
     async def add_song(self, ctx: commands.Context, info: SongInfo, playlist: bool = False):
-        self.queue.append(info)
         info.set_requester(ctx.author.display_name, ctx.author.avatar_url)
+        self.queue.append(info)
         self.size += 1
         if not playlist:
             await send_embed(ctx, info)
@@ -86,9 +86,9 @@ class SongQueue():
         self.looping = False
 
     async def send_queue(self, ctx: commands.Context):
-        queue = Embed(title="Song queue list")
+        queue = Embed(title=f"{ctx.guild.name} song list")
         total_time = 0
-        for i in range(self.index, min(self.size, 9)):
+        for i in range(self.index, min(self.size, (9 + self.index))):
             if self.queue[i].duration > 3600:
                 song_time = time.strftime('%H:%M:%S', time.gmtime(self.queue[i].duration))
             else:
@@ -132,7 +132,7 @@ async def send_embed(ctx: commands.Context, song: SongInfo):
                 description=f"Song added by {user}")
     msg.set_author(name=user, icon_url=ctx.author.avatar_url)
     msg.set_thumbnail(url=song.sthumbnail)
-    await ctx.send(embed=msg)
+    return await ctx.send(embed=msg)
 
 
 def get_song_info_yt(arg: str):
