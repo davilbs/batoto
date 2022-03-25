@@ -3,7 +3,8 @@ import asyncio
 from discord.ext import commands
 import botskills.utils.utils as utils
 
-class music(commands.Cog):
+
+class Music(commands.Cog):
     my_ctx = commands.Context
 
     def __init__(self, client):
@@ -42,7 +43,6 @@ class music(commands.Cog):
         except discord.errors.ClientException:
             print("Failed to stop song")
 
-
     # Routine after finishing playing a song
     def after_play(self, error):
         if self.songqueue.empty():
@@ -52,11 +52,10 @@ class music(commands.Cog):
         fut = asyncio.run_coroutine_threadsafe(coro, self.client.loop)
         try:
             fut.result()
-        except:
-            if error is None:
-                print(f"Successful execution!")    
-            else:
-                print(f"Error: {error}")
+        except TimeoutError:
+            print(f"Asyncio request timeout!")
+        except asyncio.CancelledError:
+            print(f"Asyncio request cancelled!")
 
     @commands.command(aliases=['l', 'leave', 'stop'])
     async def disconnect(self, ctx: commands.Context):
@@ -68,7 +67,7 @@ class music(commands.Cog):
     @commands.command(aliases=['p'])
     @commands.cooldown(per=1, rate=3.0, type=commands.BucketType.guild)
     async def play(self, ctx: commands.Context, *, url: str = ''):
-            
+
         if url == '':
             return await utils.send_answer(ctx, "Song not identified")
 
@@ -90,7 +89,7 @@ class music(commands.Cog):
             await self.songqueue.add_song(ctx, info)
             if self.songqueue.size == 1:
                 await self.play_song(info)
-            
+
     @commands.command()
     async def pause(self, ctx: commands.Context):
         ctx.voice_client.pause()
@@ -132,5 +131,6 @@ class music(commands.Cog):
         self.songqueue.reset()
         await utils.send_answer(ctx, "Queue cleared!")
 
+
 def setup(client):
-    client.add_cog(music(client))
+    client.add_cog(Music(client))
